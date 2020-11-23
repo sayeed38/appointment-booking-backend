@@ -1,12 +1,14 @@
 # Appointment Booking API
 
+Hosted Link Here: [Appointment-Booking-App-Backend](https://appointment-booking-api.herokuapp.com)
+
 ## API End Points
 
 **FreeSlots**
 
 ```javascript
 Method : POST
-End Point : http://localhost:5000/api/freeSlots
+End Point : https://appointment-booking-api.herokuapp.com/api/freeSlots
 Body : 	{
 			"date"    : "2020-11-23",
 			"timezone": "Asia/Kolkata"
@@ -17,7 +19,7 @@ Body : 	{
 
 ```javascript
 Method : POST
-End Point : http://localhost:5000/api/createEvent
+End Point : https://appointment-booking-api.herokuapp.com/api/createEvent
 Body : 	{
 		    "datetime": "2020-11-23T22:00:00",
 		    "duration": 30,
@@ -29,7 +31,7 @@ Body : 	{
 
 ```javascript
 Method : POST
-End Point : http://localhost:5000/api/getEvents
+End Point : https://appointment-booking-api.herokuapp.com/api/getEvents
 Body : 	{
 		    "startdate": "2020-11-23",
 		    "enddate"  : "2020-11-23"
