@@ -30,6 +30,10 @@ const config = {
 
 const eventRef = db.collection("events");
 
+app.get("/", (req, res) => {
+  res.send("Appointment Booking API");
+});
+
 app.post("/api/freeSlots", async (req, res) => {
   console.log(req.body);
   const timezone = req.body.timezone;
