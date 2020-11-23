@@ -5,18 +5,6 @@ const {
   ZoneId,
 } = require("@js-joda/core");
 
-const formatHour = (hour, i) => {
-  let time = "";
-  if (hour < 12) {
-    time = hour;
-  } else if (hour === 12) {
-    time = hour;
-  } else {
-    const hr = i.minusHours(12);
-    time = hr.hour();
-  }
-  return time;
-};
 
 const getRequestedTime = (datetime, dur, config) => {
   requestedTime = [];
@@ -59,7 +47,8 @@ const getFreeSlots = (config, existingTime, j, reqDate, timezone) => {
     i < config.endHours;
     i = i.plusMinutes(config.duration)
   ) {
-    let time = formatHour(i.hour(), i) + ":" + i.minute();
+    let time = i.hour() + ":" + i.minute();
+    
     if (existingTime.indexOf(time) === -1) {
       const currentTimeZone = LocalDateTime.of(
         j._date._year,

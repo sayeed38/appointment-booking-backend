@@ -35,7 +35,6 @@ app.get("/", (req, res) => {
 });
 
 app.post("/api/freeSlots", async (req, res) => {
-  console.log(req.body);
   const timezone = req.body.timezone;
   if (
     req.body.date === undefined ||
@@ -53,9 +52,7 @@ app.post("/api/freeSlots", async (req, res) => {
     ZoneId.of(config.timezone)
   );
   const zoneDate = LocalDateTime.parse(zoneDT._dateTime.toString());
-
   const [startDate, endDate] = getDates(reqDate, zoneDate);
-
   let availableTimeSlot = [];
   for(let j=startDate; j<=endDate; j=j.plusDays(1)){
     const dateStr = convertDateToString(j);
@@ -111,23 +108,20 @@ app.post("/api/getEvents", async (req, res) => {
 });
 
 app.post("/api/createEvent", async (req, res) => {
-  console.log(req.body);
   const timezone = req.body.timezone;
   if (req.body.datetime === undefined || timezone === undefined || timezone.trim() === "") {
     res.sendStatus(422);
     return;
   }
-
+  console.log(req.body);
   const dur = +req.body.duration;
   let reqDT = LocalDateTime.parse(req.body.datetime)
     .atZone(ZoneId.of(timezone))
     .toString();
-  console.log(reqDT);
   const zoneDT = ZonedDateTime.parse(reqDT).withZoneSameInstant(
     ZoneId.of(config.timezone)
   );
   const datetime = zoneDT._dateTime;
-  console.log(datetime);
   if (
     !(
       LocalTime.parse(datetime._time.toString()) <
@@ -148,13 +142,12 @@ app.post("/api/createEvent", async (req, res) => {
 
   const date = convertDateToString(datetime);
   const requestedTime = getRequestedTime(datetime, dur, config);
-  console.log(requestedTime);
   let flag = false;
   const result = await eventRef.doc(date).collection("timeEvents").get();
   if (result.docs.length === 0) {
     flag = true;
   }
-
+  
   let dtn = 30;
   if (flag) {
     const docRef = eventRef.doc(date).collection("timeEvents");
@@ -178,7 +171,7 @@ app.post("/api/createEvent", async (req, res) => {
       let time = dt.hour() + ":" + dt.minute();
       return time;
     });
-    console.log(times);
+    
     if (timeAlreadyExist(requestedTime, times)) {
       res.sendStatus(422);
       return;
