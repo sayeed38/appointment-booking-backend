@@ -13,9 +13,9 @@ const {
   convertDateToString,
   timeAlreadyExist,
   getFreeSlots,
-  getDates
+  getDates,
 } = require("./utils/helperFunctions");
-var cors = require('cors');
+var cors = require("cors");
 
 const app = express();
 app.use(express.json());
@@ -44,33 +44,43 @@ app.post("/api/freeSlots", async (req, res) => {
     res.sendStatus(422);
     return;
   }
-  const date = LocalDate.parse(req.body.date);
+  let date;
+  try {
+    date = LocalDate.parse(req.body.date);
+  } catch (e) {
+    res.sendStatus(422);
+    return;
+  }
+
   const reqDT = LocalDateTime.of(date._year, date._month, date._day)
-    .atZone(ZoneId.of(timezone)).toString();
-  const reqDate = LocalDateTime.parse(ZonedDateTime.parse(reqDT)._dateTime.toString());
+    .atZone(ZoneId.of(timezone))
+    .toString();
+  const reqDate = LocalDateTime.parse(
+    ZonedDateTime.parse(reqDT)._dateTime.toString()
+  );
   const zoneDT = ZonedDateTime.parse(reqDT).withZoneSameInstant(
     ZoneId.of(config.timezone)
   );
   const zoneDate = LocalDateTime.parse(zoneDT._dateTime.toString());
   const [startDate, endDate] = getDates(reqDate, zoneDate);
   let availableTimeSlot = [];
-  for(let j=startDate; j<=endDate; j=j.plusDays(1)){
+  for (let j = startDate; j <= endDate; j = j.plusDays(1)) {
     const dateStr = convertDateToString(j);
     const result = await eventRef.doc(dateStr).collection("timeEvents").get();
     let existingTime = [];
 
     if (result.docs.length !== 0) {
       existingTime = result.docs.map((res) => {
-        let dt = LocalDateTime.parse(res.data().datetime);
-        let time = dt.hour() + ":" + dt.minute();
-        return time;
+        return res.data();
       });
     }
 
-    availableTimeSlot.push(...getFreeSlots(config, existingTime, j, reqDate, timezone));
+    availableTimeSlot.push(
+      ...getFreeSlots(config, existingTime, j, reqDate, timezone)
+    );
   }
-  
-  res.send({"FreeSlot" : availableTimeSlot});
+
+  res.send({ FreeSlot: availableTimeSlot });
 });
 
 app.post("/api/getEvents", async (req, res) => {
@@ -78,8 +88,14 @@ app.post("/api/getEvents", async (req, res) => {
     res.sendStatus(422);
     return;
   }
-  const startDate = LocalDate.parse(req.body.startdate);
-  const endDate = LocalDate.parse(req.body.enddate);
+  let startDate, endDate;
+  try {
+    startDate = LocalDate.parse(req.body.startdate);
+    endDate = LocalDate.parse(req.body.enddate);
+  } catch (e) {
+    res.sendStatus(422);
+    return;
+  }
 
   if (
     startDate.toString() === "Invalid Date" ||
@@ -109,15 +125,24 @@ app.post("/api/getEvents", async (req, res) => {
 
 app.post("/api/createEvent", async (req, res) => {
   const timezone = req.body.timezone;
-  if (req.body.datetime === undefined || timezone === undefined || timezone.trim() === "") {
+  if (
+    req.body.datetime === undefined ||
+    timezone === undefined ||
+    timezone.trim() === ""
+  ) {
     res.sendStatus(422);
     return;
   }
-  console.log(req.body);
   const dur = +req.body.duration;
-  let reqDT = LocalDateTime.parse(req.body.datetime)
-    .atZone(ZoneId.of(timezone))
-    .toString();
+  let reqDT;
+  try {
+    reqDT = LocalDateTime.parse(req.body.datetime)
+      .atZone(ZoneId.of(timezone))
+      .toString();
+  } catch (e) {
+    res.sendStatus(422);
+    return;
+  }
   const zoneDT = ZonedDateTime.parse(reqDT).withZoneSameInstant(
     ZoneId.of(config.timezone)
   );
@@ -147,7 +172,7 @@ app.post("/api/createEvent", async (req, res) => {
   if (result.docs.length === 0) {
     flag = true;
   }
-  
+
   let dtn = 30;
   if (flag) {
     const docRef = eventRef.doc(date).collection("timeEvents");
@@ -161,18 +186,16 @@ app.post("/api/createEvent", async (req, res) => {
         .add({
           datetime: datetime.plusMinutes(i).toString(),
           duration: totalDuration,
-          timezone: config.timezone
+          timezone: config.timezone,
         })
         .then(() => console.log("Saved"));
     }
   } else {
-    const times = result.docs.map((res) => {
-      let dt = LocalDateTime.parse(res.data().datetime);
-      let time = dt.hour() + ":" + dt.minute();
-      return time;
+    const previousEvents = result.docs.map((res) => {
+      return res.data();
     });
-    
-    if (timeAlreadyExist(requestedTime, times)) {
+
+    if (timeAlreadyExist(datetime, previousEvents)) {
       res.sendStatus(422);
       return;
     }
@@ -187,14 +210,13 @@ app.post("/api/createEvent", async (req, res) => {
         .add({
           datetime: datetime.plusMinutes(i).toString(),
           duration: totalDuration,
-          timezone: config.timezone
+          timezone: config.timezone,
         })
         .then(() => console.log("Saved"));
     }
   }
 
   res.send("Event Created");
-
 });
 
 app.listen(process.env.PORT || 5000, () => console.log("App Started"));
